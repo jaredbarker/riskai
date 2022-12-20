@@ -268,15 +268,18 @@ play_button = None
 def play_log():
     global current_state
     if playing:
+        delay = 0
         nextstate()
-    delay = 500
-    #if current_state.turn_type == 'Place' or current_state.turn_type == 'PrePlace':
-    if current_state.turn_type == 'Place':
-        num_free = current_state.players[current_state.current_player].free_armies 
-        if num_free > 3:
-            delay = 50
-        elif num_free > 1:
-            delay = 250
+    else:
+        delay = 500
+        print("play log called")
+        #if current_state.turn_type == 'Place' or current_state.turn_type == 'PrePlace':
+        if current_state.turn_type == 'Place':
+            num_free = current_state.players[current_state.current_player].free_armies
+            if num_free > 3:
+                delay = 50
+            elif num_free > 1:
+                delay = 250
         
     root.after(delay, play_log)
       
