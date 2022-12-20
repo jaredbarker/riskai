@@ -279,6 +279,12 @@ def play_log():
             delay = 250
         
     root.after(delay, play_log)
+
+
+def play_log_through():
+    global current_state
+    while not logover:
+        nextstate()
       
 def setupdata():
     """Start the game"""
@@ -321,7 +327,7 @@ def setupdata():
     
     gc.collect()
     
-    play_log()
+    play_log_through()
     
 logfile = None
 current_state = None
@@ -415,5 +421,4 @@ if __name__ == "__main__":
     #Set up display stuff
     setupdata()
     #Call to get things started
-    nextstate(False)
     root.mainloop()

@@ -111,10 +111,9 @@ def play_game(player_names, ai_players, ai_files, stats, save_logfile, verbose=F
             print('TURN-TYPE: ', state.turn_type)
             print('TIME-LEFT: ', time_left[state.players[state.current_player].name])
         
-        if save_logfile:
-            #Log the current state
-            logfile.write(state.to_string())
-            logfile.write('\n')
+        #Log the current state
+        logfile.write(state.to_string())
+        logfile.write('\n')
 
         #Get current player
         current_ai = ai_players[state.players[state.current_player].name]
