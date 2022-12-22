@@ -95,7 +95,7 @@ def play_game(player_names, ai_players, ai_files, stats, save_logfile, verbose=F
         #Open the logfile
         logname = logname + '_' + str(stats.games_played) + '_' + timestr + '.log'
         logfile = open(logname, 'w')
-        
+
         logfile.write(board.to_string())
         logfile.write('\n')
     
@@ -115,6 +115,8 @@ def play_game(player_names, ai_players, ai_files, stats, save_logfile, verbose=F
             #Log the current state
             logfile.write(state.to_string())
             logfile.write('\n')
+            logfile.close()
+            logfile = open(logname, 'a')
 
         #Get current player
         current_ai = ai_players[state.players[state.current_player].name]
@@ -245,7 +247,7 @@ def play_game(player_names, ai_players, ai_files, stats, save_logfile, verbose=F
         logfile.write('\n')
         logfile.write(final_string)
         logfile.write('\n')
-        logfile.close()    
+        logfile.close()
 
 def play_match(player_names, ai_players, ai_files, stats, games_per_agent, save_logfile, verbose):
     """

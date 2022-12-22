@@ -383,8 +383,11 @@ def nextstate(read_action=True):
                 logover = True
             else:
                 last_action.from_string(newline) #This gets next action
+        state_line = logfile.readline()
+        if len(state_line) < 2:
+            logover = True
         if not logover:
-            current_state.from_string(logfile.readline(),riskboard)
+            current_state.from_string(state_line,riskboard)
     if not logover:
         display_current_state(last_action)
     previous_action = last_action
