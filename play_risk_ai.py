@@ -70,7 +70,7 @@ def play_game(player_names, ai_players, ai_files, stats, save_logfile, verbose=F
     logname = 'logs' + os.path.sep + 'RISKGAME'
     
     action_limit = 5000 #total between players  MODIFY IF USING DIFFERENT LENGTH
-    player_time_limit = 600 #seconds per player MODIFY IF USING DIFFERENT LENGTH
+    player_time_limit = 6000 #seconds per player MODIFY IF USING DIFFERENT LENGTH
     
     #Create the players
     for name in player_names:

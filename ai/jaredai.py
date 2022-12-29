@@ -9,14 +9,28 @@ from risktools import *
 from gui.aihelper import *
 from gui.turbohelper import *
 
+placement_total_assigned = False
+placement_total = 0
+placement_terr = 0
+
 def getAction(state, time_left=None):
     """Main AI function.  It should return a valid AI action for this state."""
+    global placement_total_assigned
+    global placement_total
+    global placement_terr
 
     if state.turn_type == 'PrePlace' and state.players[state.current_player].free_armies == 19:
         #print(f"Free armies for first player: {state.players[state.current_player].free_armies}")
         final_reward = eval_final_placement(state)
         for player in final_reward:
             print(f"Player {state.players[player].name} has score: {final_reward[player]}")
+
+    if state.turn_type == 'Place' and not placement_total_assigned:
+        placement_total_assigned = True
+        placement_total = state.players[state.current_player].free_armies
+
+    if state.turn_type == 'Attack' and placement_total_assigned:
+        placement_total_assigned = False
 
     # Get the possible actions in this state
     actions = getAllowedActions(state)
@@ -32,17 +46,43 @@ def getAction(state, time_left=None):
     if state.turn_type == 'PreAssign':
         myaction = get_pre_assign(actions, state)
 
-    if state.turn_type == 'PrePlace' or state.turn_type == 'Fortify' or state.turn_type == 'Place':
+    if state.turn_type == 'Place':
+        attack_total = numpy.ceil(placement_total / 2)
+        current_armies = state.players[state.current_player].free_armies
+
+        if current_armies > attack_total:
+            myaction = get_troop_movement(actions, state)
+        elif current_armies == attack_total:
+            best_value = -numpy.inf
+            best_action = None
+            for terr_action in get_bordering_territory_actions(actions, state):
+                new_state = state.copy_state()
+                place_remaining_armies(new_state, terr_action)
+                action_options = []
+                attack_actions = getAttackActions(new_state)
+                for i in range(len(attack_actions)):
+                    if dice_advantage(attack_actions[i], new_state):
+                        action_options.append(attack_actions[i])
+
+                temp_action, value = get_attack(action_options, new_state)
+
+                if value > best_value:
+                    best_action = temp_action
+                    best_value = value
+
+            placement_terr = best_action.from_territory
+            for a in actions:
+                if a.to_territory == placement_terr:
+                    myaction = a
+        else:
+            for a in actions:
+                if a.to_territory == placement_terr:
+                    myaction = a
+
+    if state.turn_type == 'PrePlace' or state.turn_type == 'Fortify':
         myaction = get_troop_movement(actions, state)
 
     if state.turn_type == 'Attack':
-        #print(f"Valuation: {risk_eval(state)}")
-        #print(state.to_string())
-        #action_index = 0
-        #myaction = actions[action_index]
-        #while not dice_advantage(myaction, state):
-            #action_index += 1
-            #myaction = actions[action_index]
         current_valuation = risk_eval(state)
         if current_valuation > 35.0:
             action_index = 0
@@ -56,7 +96,7 @@ def getAction(state, time_left=None):
                     action_options.append(actions[i])
 
             if len(action_options) > 1:
-                myaction = get_attack(action_options, state)
+                myaction, value = get_attack(action_options, state)
             else:
                 myaction = action_options[0]
     # Return the chosen action
@@ -91,7 +131,7 @@ def get_attack(actions, state: RiskState):
             best_move_value = value
             best_move = i
 
-    return actions[best_move]
+    return actions[best_move], best_move_value
 
 
 def attack_search(state: RiskState, depth):
@@ -210,6 +250,10 @@ def troop_movement_eval(actions, state):
         terr_val += num_enemies
         tot_value += terr_val
     return tot_value
+
+def place_remaining_armies(new_state, terr_action):
+    while new_state.players[new_state.current_player].free_armies > 0:
+        simulatePlaceAction(new_state, RiskAction('Place', terr_action.to_territory, None, None))
 
 
 def get_pre_assign(actions, state):
@@ -452,25 +496,6 @@ class PreAssignNode:
             self.next_action = 0
             for i in range(1, len(self.actions)):
                 self.children.update({self.actions[i]: None})
-
-
-def attack_move(actions, state):
-    root_node = PreAssignNode(state)
-
-    start_time = time.gmtime()
-
-    action = actions[0]
-
-    while time.gmtime().tm_sec - start_time.tm_sec > 10:
-        mcts(root_node)
-
-    max_searches = 0
-    for a in root_node.children:
-        if root_node.children[a] is not None:
-            if root_node.children[a].searches > max_searches:
-                action = a
-                max_searches = root_node.children[a].searches
-    return action
 
 
 # Code below this is the interface with Risk.pyw GUI version
